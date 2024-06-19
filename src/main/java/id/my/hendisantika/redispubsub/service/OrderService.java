@@ -1,5 +1,6 @@
 package id.my.hendisantika.redispubsub.service;
 
+import id.my.hendisantika.redispubsub.model.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,4 +26,9 @@ public class OrderService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final ChannelTopic channelTopic;
+
+    public Long publish(OrderEvent orderEvent) {
+        log.info("Sending message: {}", orderEvent);
+        return redisTemplate.convertAndSend(channelTopic.getTopic(), orderEvent);
+    }
 }
