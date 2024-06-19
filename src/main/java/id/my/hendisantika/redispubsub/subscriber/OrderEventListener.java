@@ -1,12 +1,17 @@
 package id.my.hendisantika.redispubsub.subscriber;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import id.my.hendisantika.redispubsub.model.OrderEvent;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,12 +25,22 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class OrderEventListener implements MessageListener {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
     @Qualifier("pubsubRedisTemplate")
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    @Override
+    public void onMessage(Message message, byte[] pattern) {
+        try {
+            log.info("New message received: {}", message);
+            OrderEvent orderEvent = objectMapper.readValue(message.getBody(), OrderEvent.class);
+            redisTemplate.opsForValue().set(orderEvent.getOrderId(), orderEvent);
+        } catch (IOException e) {
+            log.error("error while parsing message");
+        }
+    }
 }
