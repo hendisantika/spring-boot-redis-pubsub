@@ -23,7 +23,6 @@ public class RedisConfiguration {
     @Value("${redis.pubsub.topic:order-events}")
     private String redisPubSubTopic;
 
-
     @Bean(name = "customRedisTemplate")
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory connectionFactory) {
