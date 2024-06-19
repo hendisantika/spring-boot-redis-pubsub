@@ -3,6 +3,7 @@ package id.my.hendisantika.redispubsub.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -24,6 +25,7 @@ public class RedisConfiguration {
     private String redisPubSubTopic;
 
     @Bean(name = "customRedisTemplate")
+    @Primary
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory connectionFactory) {
 
