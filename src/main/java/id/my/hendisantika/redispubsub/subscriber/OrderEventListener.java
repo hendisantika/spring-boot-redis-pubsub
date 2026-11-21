@@ -1,6 +1,5 @@
 package id.my.hendisantika.redispubsub.subscriber;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import id.my.hendisantika.redispubsub.model.OrderEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +9,8 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,8 +38,8 @@ public class OrderEventListener implements MessageListener {
             log.info("New message received: {}", message);
             OrderEvent orderEvent = objectMapper.readValue(message.getBody(), OrderEvent.class);
             redisTemplate.opsForValue().set(orderEvent.getOrderId(), orderEvent);
-        } catch (IOException e) {
-            log.error("error while parsing message");
+        } catch (JacksonException e) {
+            log.error("error while parsing message", e);
         }
     }
 }

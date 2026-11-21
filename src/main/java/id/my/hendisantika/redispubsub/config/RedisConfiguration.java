@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,7 +31,7 @@ public class RedisConfiguration {
 
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(GenericJacksonJsonRedisSerializer.builder().enableUnsafeDefaultTyping().build());
         return template;
     }
 
@@ -46,7 +46,7 @@ public class RedisConfiguration {
 
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(GenericJacksonJsonRedisSerializer.builder().enableUnsafeDefaultTyping().build());
         return template;
     }
 }

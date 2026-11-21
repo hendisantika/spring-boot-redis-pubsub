@@ -1,35 +1,36 @@
 package id.my.hendisantika.redispubsub;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.redis.testcontainers.RedisContainer;
 import id.my.hendisantika.redispubsub.model.OrderEvent;
 import id.my.hendisantika.redispubsub.subscriber.OrderEventListener;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
 class SpringBootRedisPubsubApplicationTests {
 
     @Container
-    static RedisContainer REDIS_CONTAINER =
-            new RedisContainer(DockerImageName.parse("redis:7-alpine3.16")).withExposedPorts(6379);
+    @ServiceConnection(name = "redis")
+    static GenericContainer<?> REDIS_CONTAINER =
+            new GenericContainer<>(DockerImageName.parse("redis:8-alpine")).withExposedPorts(6379);
 
-    @MockBean
+    @MockitoBean
     OrderEventListener orderEventListener;
 
     @Autowired
@@ -38,14 +39,8 @@ class SpringBootRedisPubsubApplicationTests {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @DynamicPropertySource
-    private static void registerRedisProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.data.redis.host", REDIS_CONTAINER::getHost);
-        registry.add("spring.data.redis.port", () -> REDIS_CONTAINER.getMappedPort(6379).toString());
-    }
-
     @Test
-    public void testOnMessage() throws Exception {
+    void testOnMessage() {
         OrderEvent orderEvent = OrderEvent.builder()
                 .orderId("1")
                 .userId("12")
@@ -56,17 +51,14 @@ class SpringBootRedisPubsubApplicationTests {
 
         redisTemplate.convertAndSend("order-events", orderEvent);
 
-        Thread.sleep(1000);
-
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        Mockito.verify(orderEventListener).onMessage(argumentCaptor.capture(), ArgumentMatchers.any());
+        verify(orderEventListener, timeout(5000)).onMessage(argumentCaptor.capture(), ArgumentMatchers.any());
 
-        OrderEvent receivedEvent = objectMapper.readValue(argumentCaptor.getValue().getBody(),
-                OrderEvent.class);
+        OrderEvent receivedEvent = objectMapper.readValue(argumentCaptor.getValue().getBody(), OrderEvent.class);
 
-        assertEquals(receivedEvent.getOrderId(), orderEvent.getOrderId());
-        assertEquals(receivedEvent.getQuantity(), orderEvent.getQuantity());
-        assertEquals(receivedEvent.getPrice(), orderEvent.getPrice());
+        assertEquals(orderEvent.getOrderId(), receivedEvent.getOrderId());
+        assertEquals(orderEvent.getQuantity(), receivedEvent.getQuantity());
+        assertEquals(orderEvent.getPrice(), receivedEvent.getPrice());
     }
 
 }
